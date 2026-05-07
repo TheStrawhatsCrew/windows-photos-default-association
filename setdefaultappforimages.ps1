@@ -1,0 +1,2 @@
+$images=@('.jpg','.jpeg','.png','.bmp','.gif','.ico','.tif','.tiff','.webp','.jfif','.heic'); foreach($image in $images){cmd /c assoc $image=AppX43hn07pmpsxe668av6vsk5744vy0m6v2}
+foreach($image in $images){cmd /c assoc $image}
