@@ -1,0 +1,70 @@
+- name: Configure Windows Photos Default Apps (STABLE FIX ALL PROFILES)
+  hosts: windows
+  gather_facts: no
+
+  vars:
+    temp_dir: 'C:\Temp'
+    progid: 'AppX43hnxtbyyps62jhe9sqpdzxn1790zetc'
+
+  tasks:
+
+    - name: Create temp directory
+      ansible.windows.win_file:
+        path: "{{ temp_dir }}"
+        state: directory
+
+    - name: Copy SFTA script
+      ansible.windows.win_copy:
+        src: files/SFTA.ps1
+        dest: "{{ temp_dir }}\\SFTA.ps1"
+
+    - name: Create FINAL association script
+      ansible.windows.win_copy:
+        dest: "{{ temp_dir }}\\set_photos.ps1"
+        content: |
+          $ErrorActionPreference = "Stop"
+
+          # FORCE load SFTA
+          . "C:\Temp\SFTA.ps1"
+
+          if (-not (Get-Command Set-FTA -ErrorAction SilentlyContinue)) {
+              throw "SFTA not loaded"
+          }
+
+          $progid = "{{ progid }}"
+
+          $exts = @(
+            ".jpg",".jpeg",".jpe",".png",
+            ".bmp",".gif",".webp",
+            ".jfif",".tif",".tiff"
+          )
+
+          # STEP 1: APPLY ALL ASSOCIATIONS FIRST
+          foreach ($e in $exts) {
+
+              Write-Host "Setting $e -> $progid"
+
+              try {
+                  Set-FTA -ProgId $progid -Extension $e -Verbose
+              }
+              catch {
+                  # Write-Host "FAILED $e $_"
+              }
+          }
+
+          # STEP 2: force shell refresh AFTER all changes
+          Start-Sleep -Seconds 2
+          Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 2
+
+          Write-Host "DONE"
+
+    - name: Run script AS LOGGED-IN USER (CRITICAL FIX)
+      ansible.windows.win_shell: |
+        $user = (Get-CimInstance Win32_ComputerSystem).UserName
+
+        schtasks /Create /TN "PhotosFTA_FIX" /SC ONCE /ST 23:59 `
+        /RU $user /RL HIGHEST /F `
+        /TR "powershell.exe -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -File C:\Temp\set_photos.ps1"
+
+        schtasks /Run /TN "PhotosFTA_FIX"
