@@ -1,3 +1,4 @@
+#SFTA.ps1
 <#
 .SYNOPSIS
     Set File Type Association Windows 8/10/11
