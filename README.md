@@ -1,60 +1,45 @@
-# Restore Windows Image File Associations
+Restore Windows Image File Associations
 
-This PowerShell script restores common image file extensions to the default Microsoft Photos application association on Windows.
+This PowerShell script restores common image file extensions to the default Microsoft Photos application on Windows.
 
-## Supported Extensions
+It uses the SFTA module to reassign image file associations and refreshes Windows Explorer so the changes apply immediately.
 
-The script updates associations for:
+Supported File Extensions
 
-- .jpg
-- .jpeg
-- .png
-- .bmp
-- .gif
-- .ico
-- .tif
-- .tiff
-- .webp
-- .jfif
-- .heic
+The following image formats are restored:
 
-## PowerShell Script
+.jpg
+.jpeg
+.jpe
+.png
+.bmp
+.gif
+.webp
+.jfif
+.tif
+.tiff
+Requirements
 
-```powershell
-$ErrorActionPreference = "Stop"
+Before running the script:
 
-          # FORCE load SFTA
-          . "C:\Temp\SFTA.ps1"
+Download or place SFTA.ps1 in:
+C:\Temp\SFTA.ps1
+Run PowerShell as Administrator.
+Replace:
+{{ progid }}
 
-          if (-not (Get-Command Set-FTA -ErrorAction SilentlyContinue)) {
-              throw "SFTA not loaded"
-          }
+with the desired application ProgID.
 
-          $progid = "{{ progid }}"
+What the Script Does
 
-          $exts = @(
-            ".jpg",".jpeg",".jpe",".png",
-            ".bmp",".gif",".webp",
-            ".jfif",".tif",".tiff"
-          )
+The script:
 
-          # STEP 1: APPLY ALL ASSOCIATIONS FIRST
-          foreach ($e in $exts) {
-
-              Write-Host "Setting $e -> $progid"
-
-              try {
-                  Set-FTA -ProgId $progid -Extension $e -Verbose
-              }
-              catch {
-                  # Write-Host "FAILED $e $_"
-              }
-          }
-
-          # STEP 2: force shell refresh AFTER all changes
-          Start-Sleep -Seconds 2
-          Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
-          Start-Sleep -Seconds 2
-
-          Write-Host "DONE"
-
+Loads the SFTA module
+Verifies the module is available
+Applies the selected ProgID to all supported image extensions
+Restarts Windows Explorer
+Immediately refreshes file associations
+Notes
+Some Windows policies or third-party applications may override file associations.
+A system restart may occasionally be required.
+Errors for individual extensions are ignored so the script can continue processing the remaining formats.

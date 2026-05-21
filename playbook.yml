@@ -59,6 +59,17 @@
 
           Write-Host "DONE"
 
+    # CRITICAL STEP:
+    # File associations must be changed in the CONTEXT
+    # of the currently logged-in user.
+    #
+    # Running directly as SYSTEM or Administrator
+    # often fails because Windows stores associations
+    # per-user.
+    #
+    # This task creates a scheduled task that runs
+    # the PowerShell script as the active logged-in user.
+
     - name: Run script AS LOGGED-IN USER (CRITICAL FIX)
       ansible.windows.win_shell: |
         $user = (Get-CimInstance Win32_ComputerSystem).UserName
